@@ -1,0 +1,6 @@
+# Ignore Everything
+*
+
+# But not these:
+!.gitignore
+!0curator.html
