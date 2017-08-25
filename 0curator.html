@@ -44,6 +44,7 @@
         section.sort:hover ul { opacity: 1; }
         section li { padding: 5px 10px; cursor: pointer; }
         section ul li { margin: 2.5px; background: #000000; color: #FFFFFF; }
+        section ul li:nth-of-type(n+1):nth-of-type(-n+3){ display:none; }
         section > li { display: flex; position: absolute; width: 100%; height: 100%; text-align: center; justify-content: center; align-items: center; z-index: 1; }
         section li.delete { position: absolute; top: 15px; right: 15px; background: #FF0000; }
         section.flagged li.delete { top: 0; left: 0; right: auto; background: transparent; color: #FF0000; }
@@ -349,7 +350,21 @@
           cLoadedImgs.classList.add('empty');
           cLoadedImgs.innerHTML = '';
           for(var i=0, n; n=aAllFiles[i]; i++) {
-            if (n.name === rFiles.srcElement.value) {
+            if (rFiles.srcElement.value === 'All') {
+              fShuffle(n);
+              for(var ii=0, nn; nn=n[ii]; ii++) {
+                var cGridItem = fCreateElement('div', '', 'grid-item');
+                var cRelativeContainer = fCreateElement('section');
+                (sMode === 'manage') ? cRelativeContainer.classList.add('sort') : '';
+                var eImage = fCreateElement('img');
+                eImage.src = fGetAbsolutePath(nn.webkitRelativePath);
+                cRelativeContainer.appendChild(eImage);
+                cRelativeContainer.appendChild(fRenderFolderNames());
+                cGridItem.appendChild(cRelativeContainer);
+                cLoadedImgs.appendChild(cGridItem);
+              }
+            } else if (n.name === rFiles.srcElement.value) {
+              fShuffle(n);
               for(var ii=0, nn; nn=n[ii]; ii++) {
                 var cGridItem = fCreateElement('div', '', 'grid-item');
                 var cRelativeContainer = fCreateElement('section');
@@ -404,7 +419,6 @@
           sCommonFolderPath =  fGetCommonStringInArray(aRelPaths);
           for(var i=0, n; n=rFiles[i]; i++) {
             if (n.webkitRelativePath.substring(sCommonFolderPath.length, n.webkitRelativePath.length - n.name.length).length < 1) {
-              aFldr.push("./")
             } else {
               aFldr.push(n.webkitRelativePath.substring(sCommonFolderPath.length, n.webkitRelativePath.length - n.name.length))
             }
@@ -427,10 +441,16 @@
             aAllFiles = fCleanFiles(rFiles.target.files);
             oExFile = aAllFiles[1];
             aFolderNames = fGetFolderNames(aAllFiles).sort();
+            aFolderNames.splice(0, 0, "./");
+            aFolderNames.splice(1, 0, "All");
+            aFolderNames.splice(2, 0, "──────────");
             aAllFiles = fSortFiles(aAllFiles, aFolderNames);
             aFolderNames.forEach(function(rVal) {
               var eOpt = fCreateElement('option', rVal);
               eOpt.setAttribute("value", rVal);
+              if (rVal === '──────────') {
+                eOpt.setAttribute("disabled", 'disabled');
+              }
               eSelectFolder.appendChild(eOpt);
             });
             eSelectFolder.classList.remove('empty');
