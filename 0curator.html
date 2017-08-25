@@ -27,10 +27,10 @@
         select.empty { display: none; }
         button.empty { display: none; }
         label.empty { display: none; }
+        nav { position: relative; }
         .grid { padding: 0 0 120px 0; }
         .grid-sizer, .grid-item { padding: 10px; width: 50%; }
         .grid-sizer { pointer-events: none; }
-        .manage section > li, .manage section ul { display: block; }
         section { position: relative; overflow: hidden; }
         section ul {
           display: none; opacity: 0;
@@ -44,15 +44,18 @@
         section.sort:hover ul { opacity: 1; }
         section li { padding: 5px 10px; cursor: pointer; }
         section ul li { margin: 2.5px; background: #000000; color: #FFFFFF; }
-        section > li { display: none; position: absolute; z-index: 1; background: #FFFFFF; }
+        section > li { display: flex; position: absolute; width: 100%; height: 100%; text-align: center; justify-content: center; align-items: center; z-index: 1; }
         section li.delete { position: absolute; top: 15px; right: 15px; background: #FF0000; }
-        section.flagged li.delete { top: 0; left: 0; right: auto; background: #FFFFFF; color: #FF0000; }
+        section.flagged li.delete { top: 0; left: 0; right: auto; background: transparent; color: #FF0000; }
         section ul li:hover { background: -webkit-link; color: #FFFFFF; }
         img { display: block; width: 100%; margin: 0; cursor: pointer; }
         .selected.empty { opacity: 0; }
         .unselected.empty { opacity: 0; }
         .selected .flagged img { opacity: 0.1; }
         .unselected .flagged img { opacity: 0.35; }
+        figure { display: flex; position: fixed; top:0;bottom:0;left:0;right:0; margin:0;padding:60px; align-items: center; justify-content: center; background:rgba(255,255,255,0.95); z-index: 9; cursor: pointer; }
+        figure.empty { display: none; }
+        figure img { max-width:100%;max-height:100%; width: auto; box-shadow: 0px 0px 276px -15px rgba(0,0,0,0.1); cursor: default; }
         @media (min-width: 768px) {
           .grid-sizer, .grid-item { width: 33.333%; }
         }
@@ -80,6 +83,7 @@
         <select id="select-folder" class="empty"><option value=""></option></select>
         <select id="select-mode" class="empty"><option value="view">View</option><option value="manage">Manage</option></select>
       </nav>
+      <figure id="lightbox" class="empty"></figure>
       <div class="grid selected empty"></div>
       <div class="grid unselected empty"></div>
       <code></code><button class="btn copy" onclick="fCopyCommandToClipboard();" >Copy</button>
@@ -91,6 +95,7 @@
         var eFileInput = document.querySelector('#fileinput');
         var eSelectFolder = document.querySelector('#select-folder');
         var eSelectMode = document.querySelector('#select-mode');
+        var eLightbox = document.querySelector('#lightbox');
         var cLoadedImgs = document.querySelector('.selected');
         var cRejectedImgs = document.querySelector('.unselected');
         var cActions = document.querySelector('code');
@@ -253,41 +258,21 @@
           oTxtA.remove();
         }
 
+        function fWatchFlaggedImages(rImage) {
+          fGetVars();
+          rImage.addEventListener('click', function() {
+            this.parentNode.classList.remove('flagged');
+            this.parentNode.classList.add('sort');
+            fRemoveAction(this.parentNode.getElementsByTagName('img')[0].attributes.src.value, 'id', oActions);
+            this.parentNode.removeChild(this);
+          });
+        }
+
         function fWatchLoadedImages() {
           fGetVars();
           for(var i=0, n; n=oImgIn[i]; i++) {
             n.addEventListener('click', function() {
-              // Selected action
-              if (this.parentNode.classList.contains('flagged')) {
-                // Sorted
-                if (this.previousSibling) {
-                  this.previousSibling.remove();
-                  this.parentNode.classList.remove('flagged');
-                  fRemoveAction(this.attributes.src.value, 'id', oActions);
-                  if (cBody.classList.contains('manage')) {
-                    this.parentNode.classList.add('sort');
-                  }
-                // To Delete
-                } else {
-                  this.parentNode.classList.remove('flagged');
-                  if (cBody.classList.contains('manage')) {
-                    this.parentNode.classList.add('sort');
-                  }
-                  // cRejectedImgs.removeChild(fFindSrc(this.src, '.unselected section img').parentNode.parentNode);
-                  fRemoveAction(this.attributes.src.value, 'id', oActions);
-                  // fMasonryRejected();
-                  fWatchRejectedImages();
-                }
-              // View Mode
-              } else {
-                this.parentNode.classList.add('flagged');
-                // cRejectedImgs.appendChild(this.parentNode.parentNode.cloneNode(true));
-                // cRejectedImgs.classList.remove('empty');
-                this.parentNode.insertBefore(this.parentNode.lastChild.lastChild.cloneNode(true), this.parentNode.firstChild)
-                cActions.appendChild(fCreateAction('rm', [this.attributes.src.value]));
-                // fMasonryRejected();
-                fWatchRejectedImages();
-              }
+              fShowLightbox(this.parentNode.parentNode.cloneNode(true));
             });
           }
         }
@@ -320,6 +305,7 @@
                 } else {
                   cActions.appendChild(fCreateAction('mv', [this.parentNode.previousSibling.attributes.src.value, fGetModifiedAbsolutePath(this.parentNode.previousSibling.attributes.src.value, n.toElement.textContent)]));
                 }
+                fWatchFlaggedImages(this.parentNode.parentNode.firstChild)
               }
               fGetVars();
             });
@@ -335,6 +321,11 @@
           if (rSelect.srcElement.value === 'manage') {
           } else if (rSelect.srcElement.value === 'view') {
           }
+        }
+
+        function fShowLightbox(rImg) {
+          eLightbox.classList.remove('empty');
+          eLightbox.appendChild(rImg.children[0].children[0]);
         }
 
       </script>
@@ -455,6 +446,10 @@
         eFileInput.addEventListener('change', fLoadFiles, false);
         eSelectFolder.addEventListener('change', fRenderImages, false);
         eSelectMode.addEventListener('change', fSelectMode, false);
+        eLightbox.addEventListener('click', function() {
+          this.removeChild(this.firstChild);
+          this.classList.add('empty');
+        });
         document.addEventListener('keyup', fKeyboardInterupt, false);
       </script>
 
