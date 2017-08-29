@@ -20,14 +20,15 @@
       <!-- <script src="https://unpkg.com/masonry-layout@4.1/dist/masonry.pkgd.js"></script> -->
       <style>
         html, body { margin: 0; padding: 0; word-wrap: break-word; font-family: Helvetica, Arial, sans-serif; font-size: 13px; }
-        body { margin: 0 10px; }
-        input, select { margin: 20px 20px 20px 10px; }
-        input[type=checkbox] { margin: 20px 10px 20px 40px; }
+        body { margin: 0 10px; padding-top: 50px; }
         input.empty { display: none; }
+        select#select-mode { margin-left: 20px; }
         select.empty { display: none; }
         button.empty { display: none; }
         label.empty { display: none; }
-        nav { position: relative; }
+        nav { position: absolute; display: flex; justify-content: space-between; padding:20px 20px 0 20px; height:60px; top:0;left:0;right:0; background:rgba(255,255,255,0.95); z-index:9; }
+        body[data-state="manage"] nav { position: fixed; }
+        nav ul { margin: 0; }
         .grid { padding: 0 0 120px 0; }
         .grid-sizer, .grid-item { padding: 10px; width: 50%; }
         .grid-sizer { pointer-events: none; }
@@ -63,8 +64,8 @@
         @media (min-width: 1300px) {
           .grid-sizer, .grid-item { width: 25%; }
         }
-        code { display: none; margin: 0 -10px; padding: 30px 30px 90px 30px; background: #f7f8f9; }
-        .manage code, .manage button { display: block; }
+        code { display: none; position: fixed; padding: 30px 30px 90px 30px; top:60px;bottom:0;left:0;right:0; background:rgba(230,230,230,0.95); cursor:pointer; z-index:9; }
+        code[data-state="open"] { display: block; }
         p { margin: 0; }
         ul, li { padding: 0; list-style: none; }
         code ul { margin: 0 0 20px 0; }
@@ -73,21 +74,26 @@
         /*code li:nth-last-child(4) { margin-bottom: 20px; }*/
         li { display: inline-block; margin: 0; }
         .mv li:nth-last-child(-n+2) { display: inline-block; }
-        button { display: none; margin: -60px 0 0 20px; }
         * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
       </style>
     </head>
 
-    <body>
+    <body data-state="view">
       <nav>
-        <input type="file" id="fileinput" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|images/*" webkitdirectory directory multiple />
-        <select id="select-folder" class="empty"><option value=""></option></select>
-        <select id="select-mode" class="empty"><option value="view">View</option><option value="manage">Manage</option></select>
+        <ul>
+          <li><input type="file" id="fileinput" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|images/*" webkitdirectory directory multiple /></li>
+          <li><select id="select-folder" class="empty"><option value=""></option></select>
+          <li><select id="select-mode" class="empty"><option value="view">View</option><option value="manage">Manage</option></select></li>
+        </ul>
+        <ul>
+          <li><button id="show-actions" disabled="disabled">0</button></li>
+          <li><button id="copy-actions" class="btn copy" disabled="disabled" onclick="fCopyCommandToClipboard();" >Copy Changes</button></li>
+        </ul>
       </nav>
+      <code id="actions" data-state="closed"></code>
       <figure id="lightbox" class="empty"></figure>
       <div class="grid selected empty"></div>
       <div class="grid unselected empty"></div>
-      <code></code><button class="btn copy" onclick="fCopyCommandToClipboard();" >Copy</button>
 
 
       <!-- GLOBALS ///////////////////////////////////////////////////////// -->
@@ -96,6 +102,8 @@
         var eFileInput = document.querySelector('#fileinput');
         var eSelectFolder = document.querySelector('#select-folder');
         var eSelectMode = document.querySelector('#select-mode');
+        var eShowActions = document.querySelector('#show-actions');
+        var eCopyActions = document.querySelector('#copy-actions');
         var eLightbox = document.querySelector('#lightbox');
         var cLoadedImgs = document.querySelector('.selected');
         var cRejectedImgs = document.querySelector('.unselected');
@@ -265,6 +273,7 @@
             this.parentNode.classList.remove('flagged');
             this.parentNode.classList.add('sort');
             fRemoveAction(this.parentNode.getElementsByTagName('img')[0].attributes.src.value, 'id', oActions);
+            fChangeActions();
             this.parentNode.removeChild(this);
           });
         }
@@ -308,19 +317,29 @@
                 }
                 fWatchFlaggedImages(this.parentNode.parentNode.firstChild)
               }
+              fChangeActions();
               fGetVars();
             });
           }
         }
 
         function fSelectMode(rSelect) {
-          fToggleClass('manage', cBody);
+          cBody.setAttribute("data-state", rSelect.srcElement.value);
+          cActions.setAttribute("data-state", "closed");
           var oSections = document.querySelectorAll('section');
           for(var i=0, n; n=oSections[i]; i++) {
             (!n.classList.contains('flagged')) ? fToggleClass('sort', n) : '';
           }
-          if (rSelect.srcElement.value === 'manage') {
-          } else if (rSelect.srcElement.value === 'view') {
+        }
+
+        function fChangeActions(rNum) {
+          eShowActions.innerHTML = cActions.children.length;
+          if (cActions.children.length < 1) {
+            eShowActions.setAttribute("disabled", "disabled");
+            eCopyActions.setAttribute("disabled", "disabled");
+          } else {
+            eShowActions.removeAttribute("disabled");
+            eCopyActions.removeAttribute("disabled");
           }
         }
 
@@ -466,6 +485,12 @@
         eFileInput.addEventListener('change', fLoadFiles, false);
         eSelectFolder.addEventListener('change', fRenderImages, false);
         eSelectMode.addEventListener('change', fSelectMode, false);
+        eShowActions.addEventListener('click', function() {
+          cActions.setAttribute("data-state", cActions.getAttribute("data-state") === "open" ? "closed" : "open");
+        });
+        cActions.addEventListener('click', function() {
+          cActions.setAttribute("data-state", cActions.getAttribute("data-state") === "open" ? "closed" : "open");
+        });
         eLightbox.addEventListener('click', function() {
           this.removeChild(this.firstChild);
           this.classList.add('empty');
