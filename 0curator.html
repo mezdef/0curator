@@ -75,12 +75,12 @@
         <ul>
           <li><input type="file" id="fileinput" data-state="open" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|images/*" webkitdirectory directory multiple /></li>
           <li><select id="select-folder" data-state="closed"><option value=""></option></select>
-          <li><select id="select-columns" data-state="closed"><option value="1">1</option><option value="2" selected="selected">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></li>
-        </ul>
-        <ul>
           <li><select id="select-mode" data-state="closed"><option value="view">View</option><option value="manage">Manage</option></select></li>
           <li><button id="show-actions" disabled="disabled" data-state="closed">0</button></li>
           <li><button id="copy-actions" disabled="disabled" data-state="closed" onclick="fCopyCommandToClipboard();" >Copy Changes</button></li>
+        </ul>
+        <ul>
+          <li><input type="range" data-state="closed" min="1" max="6" step="1" value="2" list="volsettings"><datalist id="volsettings"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></datalist></li>
         </ul>
       </nav>
       <code data-state="closed"></code>
@@ -93,7 +93,7 @@
         var eFileInput = document.querySelector('#fileinput');
         var eSelectFolder = document.querySelector('#select-folder');
         var eSelectMode = document.querySelector('#select-mode');
-        var eSelectColumns = document.querySelector('#select-columns');
+        var eColumnsRange = document.querySelector("input[type='range']");
         var eShowActions = document.querySelector('#show-actions');
         var eCopyActions = document.querySelector('#copy-actions');
         var eLightbox = document.querySelector('figure');
@@ -382,8 +382,8 @@
           fMasonryLoaded('selected');
           fWatchLoadedImages();
           fWatchFolderNames();
-          eSelectColumns.setAttribute("data-state", "open");
           eSelectMode.setAttribute("data-state", "open");
+          eColumnsRange.setAttribute("data-state", "open");
         }
 
       </script>
@@ -466,7 +466,7 @@
         eFileInput.addEventListener('change', fLoadFiles, false);
         eSelectFolder.addEventListener('change', fRenderImages, false);
         eSelectMode.addEventListener('change', fSelectMode, false);
-        eSelectColumns.addEventListener('change', fSelectColumns, false);
+        eColumnsRange.addEventListener('change', fSelectColumns, false);
         eShowActions.addEventListener('click', function() {
           cActions.setAttribute("data-state", cActions.getAttribute("data-state") === "open" ? "closed" : "open");
         });
