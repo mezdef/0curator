@@ -35,6 +35,12 @@
         article .flagged img { opacity: 0.1; }
         .grid-sizer, .grid-item { padding: 10px; width: 50%; }
         .grid-sizer { pointer-events: none; }
+        article[data-state="1"] .grid-item { width: 100%; }
+        article[data-state="2"] .grid-item { width: 50%; }
+        article[data-state="3"] .grid-item { width: 33.333%; }
+        article[data-state="4"] .grid-item { width: 25%; }
+        article[data-state="5"] .grid-item { width: 20%; }
+        article[data-state="6"] .grid-item { width: 16.666666667%; }
         section { position: relative; overflow: hidden; }
         section ul {
           display: none; opacity: 0;
@@ -56,12 +62,6 @@
         img { display: block; width: 100%; margin: 0; cursor: pointer; }
         figure { display: flex; position: fixed; top:0;bottom:0;left:0;right:0; margin:0;padding:60px;height:100%; align-items: center; justify-content: center; background:rgba(255,255,255,0.95); z-index: 9; cursor: pointer; }
         figure img { max-width:100%;max-height:100%; width: auto; box-shadow: 0px 0px 276px -15px rgba(0,0,0,0.1); cursor: default; }
-        @media (min-width: 768px) {
-          .grid-sizer, .grid-item { width: 33.333%; }
-        }
-        @media (min-width: 1300px) {
-          .grid-sizer, .grid-item { width: 25%; }
-        }
         p { margin: 0; }
         ul, li { padding: 0; list-style: none; }
         li { display: inline-block; margin: 0; }
@@ -75,6 +75,7 @@
         <ul>
           <li><input type="file" id="fileinput" data-state="open" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|images/*" webkitdirectory directory multiple /></li>
           <li><select id="select-folder" data-state="closed"><option value=""></option></select>
+          <li><select id="select-columns" data-state="closed"><option value="1">1</option><option value="2" selected="selected">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></li>
         </ul>
         <ul>
           <li><select id="select-mode" data-state="closed"><option value="view">View</option><option value="manage">Manage</option></select></li>
@@ -92,6 +93,7 @@
         var eFileInput = document.querySelector('#fileinput');
         var eSelectFolder = document.querySelector('#select-folder');
         var eSelectMode = document.querySelector('#select-mode');
+        var eSelectColumns = document.querySelector('#select-columns');
         var eShowActions = document.querySelector('#show-actions');
         var eCopyActions = document.querySelector('#copy-actions');
         var eLightbox = document.querySelector('figure');
@@ -106,7 +108,7 @@
 
         var oExFile;
         var aFolderNames;
-        var aAllFiles, cRejectedImgs, cLoadedImgs, imgUn, oImgs, sCommonFolderPath, sMode;
+        var aAllFiles, cLoadedImgs, imgUn, oImgs, oMsnry, sCommonFolderPath, sMode;
       </script>
 
 
@@ -224,7 +226,7 @@
 
         function fMasonryLoaded() {
             setTimeout(function () {
-              var msnryS = new Masonry(cLoadedImgs, {
+              oMsnry = new Masonry(cLoadedImgs, {
                 itemSelector: '.grid-item',
                 percentPosition: true
               });
@@ -302,6 +304,11 @@
           }
         }
 
+        function fSelectColumns(rSelect) {
+          cLoadedImgs.setAttribute("data-state", rSelect.target.value)
+          oMsnry.layout();
+        }
+
         function fChangeActions(rNum) {
           eShowActions.innerHTML = cActions.children.length;
           if (cActions.children.length < 1) {
@@ -375,6 +382,7 @@
           fMasonryLoaded('selected');
           fWatchLoadedImages();
           fWatchFolderNames();
+          eSelectColumns.setAttribute("data-state", "open");
           eSelectMode.setAttribute("data-state", "open");
         }
 
@@ -458,6 +466,7 @@
         eFileInput.addEventListener('change', fLoadFiles, false);
         eSelectFolder.addEventListener('change', fRenderImages, false);
         eSelectMode.addEventListener('change', fSelectMode, false);
+        eSelectColumns.addEventListener('change', fSelectColumns, false);
         eShowActions.addEventListener('click', function() {
           cActions.setAttribute("data-state", cActions.getAttribute("data-state") === "open" ? "closed" : "open");
         });
