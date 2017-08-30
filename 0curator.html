@@ -83,11 +83,11 @@
         <ul>
           <li><input type="file" id="fileinput" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|images/*" webkitdirectory directory multiple /></li>
           <li><select id="select-folder" class="empty"><option value=""></option></select>
-          <li><select id="select-mode" class="empty"><option value="view">View</option><option value="manage">Manage</option></select></li>
         </ul>
         <ul>
-          <li><button id="show-actions" disabled="disabled">0</button></li>
-          <li><button id="copy-actions" class="btn copy" disabled="disabled" onclick="fCopyCommandToClipboard();" >Copy Changes</button></li>
+          <li><select id="select-mode" data-state="closed"><option value="view">View</option><option value="manage">Manage</option></select></li>
+          <li><button id="show-actions" disabled="disabled" data-state="closed">0</button></li>
+          <li><button id="copy-actions" disabled="disabled" data-state="closed" onclick="fCopyCommandToClipboard();" >Copy Changes</button></li>
         </ul>
       </nav>
       <code id="actions" data-state="closed"></code>
@@ -128,7 +128,7 @@
           oImgIn = document.querySelectorAll('.selected img');
           oImgOut = document.querySelectorAll('.unselected img');
           oActions = cActions.querySelectorAll('ul');
-          sMode = eSelectMode.options[eSelectMode.selectedIndex].value;
+          sMode = cBody.getAttribute("data-state");
           // oImgs = document.querySelectorAll('.selected img, .unselected img');
         }
 
