@@ -26,6 +26,9 @@
         nav { position: absolute; display: flex; justify-content: space-between; padding:20px 20px 0 20px; height:60px; top:0;left:0;right:0; background:rgba(255,255,255,1);  z-index:9; }
         body[data-state="manage"] nav { position: fixed; }
         nav ul { margin: 0; }
+        nav li { vertical-align: top; }
+        input[type="range"] { margin-right: 10px; }
+        input[type="radio"] { margin-left: 10px; }
         code { position: fixed; padding:30px; top:60px;bottom:0;left:20px;right:20px; background:rgba(240,240,240,1); border-bottom: 20px solid #FFFFFF; cursor:pointer; z-index:9; }
         code ul { margin: 0 0 20px 0; }
         code ul:last-of-type { margin: 0; }
@@ -75,12 +78,16 @@
         <ul>
           <li><input type="file" id="fileinput" data-state="open" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|images/*" webkitdirectory directory multiple /></li>
           <li><select id="select-folder" data-state="closed"><option value=""></option></select>
-          <li><select id="select-mode" data-state="closed"><option value="view">View</option><option value="manage">Manage</option></select></li>
           <li><button id="show-actions" disabled="disabled" data-state="closed">0</button></li>
           <li><button id="copy-actions" disabled="disabled" data-state="closed" onclick="fCopyCommandToClipboard();" >Copy Changes</button></li>
         </ul>
         <ul>
           <li><input type="range" data-state="closed" min="1" max="6" step="1" value="2" list="volsettings"><datalist id="volsettings"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></datalist></li>
+          <li><select id="select-mode" data-state="closed"><option value="view">Mode: View</option><option value="manage">Mode: Manage</option></select></li>
+          <li>
+            <label for="select-mode-view" data-state="closed"><input type="radio" id="select-mode-view" name="selector" value="View" checked="checked">View</label>
+            <label for="select-mode-manage" data-state="closed"><input type="radio" id="select-mode-manage" name="selector" value="Manage">Manage</label>
+          </li>
         </ul>
       </nav>
       <code data-state="closed"></code>
@@ -92,7 +99,7 @@
         var cBody = document.body;
         var eFileInput = document.querySelector('#fileinput');
         var eSelectFolder = document.querySelector('#select-folder');
-        var eSelectMode = document.querySelector('#select-mode');
+        var eModeToggle = document.querySelectorAll("input[type='radio']");
         var eColumnsRange = document.querySelector("input[type='range']");
         var eShowActions = document.querySelector('#show-actions');
         var eCopyActions = document.querySelector('#copy-actions');
@@ -382,8 +389,9 @@
           fMasonryLoaded('selected');
           fWatchLoadedImages();
           fWatchFolderNames();
-          eSelectMode.setAttribute("data-state", "open");
           eColumnsRange.setAttribute("data-state", "open");
+          eModeToggle[0].parentNode.setAttribute("data-state", "open");
+          eModeToggle[1].parentNode.setAttribute("data-state", "open");
         }
 
       </script>
@@ -465,7 +473,8 @@
       <script type="text/javascript">
         eFileInput.addEventListener('change', fLoadFiles, false);
         eSelectFolder.addEventListener('change', fRenderImages, false);
-        eSelectMode.addEventListener('change', fSelectMode, false);
+        eModeToggle[0].addEventListener('change', fSelectMode, false);
+        eModeToggle[1].addEventListener('change', fSelectMode, false);
         eColumnsRange.addEventListener('change', fSelectColumns, false);
         eShowActions.addEventListener('click', function() {
           cActions.setAttribute("data-state", cActions.getAttribute("data-state") === "open" ? "closed" : "open");
