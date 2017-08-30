@@ -21,15 +21,18 @@
       <style>
         html, body { margin: 0; padding: 0; word-wrap: break-word; font-family: Helvetica, Arial, sans-serif; font-size: 13px; }
         body { margin: 0 10px; padding-top: 50px; }
-        input.empty { display: none; }
-        select#select-mode { margin-left: 20px; }
-        select.empty { display: none; }
-        button.empty { display: none; }
-        label.empty { display: none; }
-        nav { position: absolute; display: flex; justify-content: space-between; padding:20px 20px 0 20px; height:60px; top:0;left:0;right:0; background:rgba(255,255,255,0.95); z-index:9; }
+        *[data-state="closed"] { display: none; }
+        select#select-columns, select#select-mode, button#show-actions { margin-left: 20px; }
+        nav { position: absolute; display: flex; justify-content: space-between; padding:20px 20px 0 20px; height:60px; top:0;left:0;right:0; background:rgba(255,255,255,1);  z-index:9; }
         body[data-state="manage"] nav { position: fixed; }
         nav ul { margin: 0; }
-        .grid { padding: 0 0 120px 0; }
+        code { position: fixed; padding:30px; top:60px;bottom:0;left:20px;right:20px; background:rgba(240,240,240,1); border-bottom: 20px solid #FFFFFF; cursor:pointer; z-index:9; }
+        code ul { margin: 0 0 20px 0; }
+        code ul:last-of-type { margin: 0; }
+        code li { display: block; }
+        article { padding: 0 0 120px 0; }
+        article[data-state="closed"] { display: block; opacity: 0; }
+        article .flagged img { opacity: 0.1; }
         .grid-sizer, .grid-item { padding: 10px; width: 50%; }
         .grid-sizer { pointer-events: none; }
         section { position: relative; overflow: hidden; }
@@ -51,12 +54,7 @@
         section.flagged li.delete { top: 0; left: 0; right: auto; background: transparent; color: #FF0000; }
         section ul li:hover { background: -webkit-link; color: #FFFFFF; }
         img { display: block; width: 100%; margin: 0; cursor: pointer; }
-        .selected.empty { opacity: 0; }
-        .unselected.empty { opacity: 0; }
-        .selected .flagged img { opacity: 0.1; }
-        .unselected .flagged img { opacity: 0.35; }
-        figure { display: flex; position: fixed; top:0;bottom:0;left:0;right:0; margin:0;padding:60px; align-items: center; justify-content: center; background:rgba(255,255,255,0.95); z-index: 9; cursor: pointer; }
-        figure.empty { display: none; }
+        figure { display: flex; position: fixed; top:0;bottom:0;left:0;right:0; margin:0;padding:60px;height:100%; align-items: center; justify-content: center; background:rgba(255,255,255,0.95); z-index: 9; cursor: pointer; }
         figure img { max-width:100%;max-height:100%; width: auto; box-shadow: 0px 0px 276px -15px rgba(0,0,0,0.1); cursor: default; }
         @media (min-width: 768px) {
           .grid-sizer, .grid-item { width: 33.333%; }
@@ -64,14 +62,8 @@
         @media (min-width: 1300px) {
           .grid-sizer, .grid-item { width: 25%; }
         }
-        code { display: none; position: fixed; padding: 30px 30px 90px 30px; top:60px;bottom:0;left:0;right:0; background:rgba(230,230,230,0.95); cursor:pointer; z-index:9; }
-        code[data-state="open"] { display: block; }
         p { margin: 0; }
         ul, li { padding: 0; list-style: none; }
-        code ul { margin: 0 0 20px 0; }
-        code ul:last-of-type { margin: 0; }
-        code li { display: block; }
-        /*code li:nth-last-child(4) { margin-bottom: 20px; }*/
         li { display: inline-block; margin: 0; }
         .mv li:nth-last-child(-n+2) { display: inline-block; }
         * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
@@ -81,8 +73,8 @@
     <body data-state="view">
       <nav>
         <ul>
-          <li><input type="file" id="fileinput" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|images/*" webkitdirectory directory multiple /></li>
-          <li><select id="select-folder" class="empty"><option value=""></option></select>
+          <li><input type="file" id="fileinput" data-state="open" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|images/*" webkitdirectory directory multiple /></li>
+          <li><select id="select-folder" data-state="closed"><option value=""></option></select>
         </ul>
         <ul>
           <li><select id="select-mode" data-state="closed"><option value="view">View</option><option value="manage">Manage</option></select></li>
@@ -90,11 +82,9 @@
           <li><button id="copy-actions" disabled="disabled" data-state="closed" onclick="fCopyCommandToClipboard();" >Copy Changes</button></li>
         </ul>
       </nav>
-      <code id="actions" data-state="closed"></code>
-      <figure id="lightbox" class="empty"></figure>
-      <div class="grid selected empty"></div>
-      <div class="grid unselected empty"></div>
-
+      <code data-state="closed"></code>
+      <figure data-state="closed"></figure>
+      <article data-state="closed" class="grid"></article>
 
       <!-- GLOBALS ///////////////////////////////////////////////////////// -->
       <script type="text/javascript">
@@ -104,9 +94,8 @@
         var eSelectMode = document.querySelector('#select-mode');
         var eShowActions = document.querySelector('#show-actions');
         var eCopyActions = document.querySelector('#copy-actions');
-        var eLightbox = document.querySelector('#lightbox');
-        var cLoadedImgs = document.querySelector('.selected');
-        var cRejectedImgs = document.querySelector('.unselected');
+        var eLightbox = document.querySelector('figure');
+        var cLoadedImgs = document.querySelector('article');
         var cActions = document.querySelector('code');
         var oActions = cActions.querySelectorAll('ul');
 
@@ -125,8 +114,7 @@
       <script type="text/javascript">
 
         function fGetVars() {
-          oImgIn = document.querySelectorAll('.selected img');
-          oImgOut = document.querySelectorAll('.unselected img');
+          oImgIn = document.querySelectorAll('article img');
           oActions = cActions.querySelectorAll('ul');
           sMode = cBody.getAttribute("data-state");
           // oImgs = document.querySelectorAll('.selected img, .unselected img');
@@ -181,13 +169,12 @@
         }
 
         function fGetAbsolutePath(rSrc) {
-          console.log(rSrc);
+          // console.log(rSrc);
           return sPathAbsolute.substring(0, sPathAbsolute.length - (sCommonFolderPath.length + sFileName.length)) + rSrc;
         }
 
         function fGetModifiedAbsolutePath(rSrc, rFolderNew) {
           // console.log(rSrc);
-
           // console.log(sPathAbsolute)
           var sFolderCurrent = eSelectFolder.options[eSelectFolder.selectedIndex].value;
           // console.log(rFolderCurrent);
@@ -241,16 +228,9 @@
                 itemSelector: '.grid-item',
                 percentPosition: true
               });
-              cLoadedImgs.classList.remove('empty');
-            }, 30+(document.querySelectorAll('.selected div').length*4));
+              cLoadedImgs.setAttribute("data-state", "open");
+            }, 30+(document.querySelectorAll('article div').length*4));
         };
-
-        function fMasonryRejected(rContainer) {
-          var msnryU = new Masonry(cRejectedImgs, {
-            itemSelector: '.grid-item',
-            percentPosition: true
-          });
-        }
 
         function fCopyCommandToClipboard() {
           var aCmdActions = document.querySelectorAll('code ul');
@@ -282,19 +262,7 @@
           fGetVars();
           for(var i=0, n; n=oImgIn[i]; i++) {
             n.addEventListener('click', function() {
-              fShowLightbox(this.parentNode.parentNode.cloneNode(true));
-            });
-          }
-        }
-
-        function fWatchRejectedImages() {
-          fGetVars();
-          for(var i=0, n; n=oImgOut[i]; i++) {
-            n.addEventListener('click', function() {
-              this.parentNode.remove();
-              fFindSrc(this.src, '.selected img').parentNode.classList.remove('flagged');
-              fRemoveAction(this.attributes.src.value, 'id', oActions);
-              fMasonryRejected();
+              fToggleLightbox(this.parentNode.parentNode.cloneNode(true));
             });
           }
         }
@@ -325,6 +293,8 @@
 
         function fSelectMode(rSelect) {
           cBody.setAttribute("data-state", rSelect.srcElement.value);
+          eShowActions.setAttribute("data-state", eShowActions.getAttribute("data-state") === "open" ? "closed" : "open");
+          eCopyActions.setAttribute("data-state", eCopyActions.getAttribute("data-state") === "open" ? "closed" : "open");
           cActions.setAttribute("data-state", "closed");
           var oSections = document.querySelectorAll('section');
           for(var i=0, n; n=oSections[i]; i++) {
@@ -343,9 +313,13 @@
           }
         }
 
-        function fShowLightbox(rImg) {
-          eLightbox.classList.remove('empty');
-          eLightbox.appendChild(rImg.children[0].children[0]);
+        function fToggleLightbox(rImg) {
+          eLightbox.setAttribute("data-state", eLightbox.getAttribute("data-state") === "open" ? "closed" : "open");
+          if (eLightbox.getAttribute("data-state") === "open") {
+            eLightbox.appendChild(rImg.children[0].children[0]);
+          } else {
+            eLightbox.removeChild(this.firstChild);
+          }
         }
 
       </script>
@@ -366,7 +340,7 @@
 
         function fRenderImages(rFiles) {
           fGetVars();
-          cLoadedImgs.classList.add('empty');
+          cLoadedImgs.setAttribute("data-state", "closed");
           cLoadedImgs.innerHTML = '';
           for(var i=0, n; n=aAllFiles[i]; i++) {
             if (rFiles.srcElement.value === 'All') {
@@ -399,10 +373,9 @@
           }
 
           fMasonryLoaded('selected');
-          fMasonryLoaded('unselected');
           fWatchLoadedImages();
           fWatchFolderNames();
-          eSelectMode.classList.remove('empty');
+          eSelectMode.setAttribute("data-state", "open");
         }
 
       </script>
@@ -472,8 +445,8 @@
               }
               eSelectFolder.appendChild(eOpt);
             });
-            eSelectFolder.classList.remove('empty');
-            eFileInput.classList.add('empty');
+            eSelectFolder.setAttribute("data-state", "open");
+            eFileInput.setAttribute("data-state", "closed");
           }
         }
 
@@ -491,10 +464,7 @@
         cActions.addEventListener('click', function() {
           cActions.setAttribute("data-state", cActions.getAttribute("data-state") === "open" ? "closed" : "open");
         });
-        eLightbox.addEventListener('click', function() {
-          this.removeChild(this.firstChild);
-          this.classList.add('empty');
-        });
+        eLightbox.addEventListener('click', fToggleLightbox, false);
         document.addEventListener('keyup', fKeyboardInterupt, false);
       </script>
 
