@@ -24,7 +24,7 @@
         *[data-state="closed"] { display: none; }
         select#select-columns, select#select-mode, button#show-actions { margin-left: 20px; }
         nav { position: absolute; display: flex; justify-content: space-between; padding:20px 20px 0 20px; height:60px; top:0;left:0;right:0; background:rgba(255,255,255,1);  z-index:9; }
-        body[data-state="manage"] nav { position: fixed; }
+        html[data-state="manage"] nav { position: fixed; }
         nav ul { margin: 0; }
         nav li { vertical-align: top; }
         input[type="range"] { margin-right: 10px; }
@@ -38,13 +38,12 @@
         article .flagged img { opacity: 0.1; }
         .grid-sizer, .grid-item { padding: 10px; width: 50%; }
         .grid-sizer { pointer-events: none; }
-        article[data-state="1"] .grid-item { width: 100%; }
-        article[data-state="2"] .grid-item { width: 50%; }
-        article[data-state="3"] .grid-item { width: 33.333%; }
-        article[data-state="4"] .grid-item { width: 25%; }
-        article[data-state="5"] .grid-item { width: 20%; }
-        article[data-state="6"] .grid-item { width: 16.666666667%; }
-        section { position: relative; overflow: hidden; }
+        body[data-state="1"] .grid-item { width: 100%; }
+        body[data-state="2"] .grid-item { width: 50%; }
+        body[data-state="3"] .grid-item { width: 33.333%; }
+        body[data-state="4"] .grid-item { width: 25%; }
+        body[data-state="5"] .grid-item { width: 20%; }
+        body[data-state="6"] .grid-item { width: 16.666666667%; }
         section ul {
           display: none; opacity: 0;
           position:absolute; margin:0;padding:15px;top:0;bottom:0;left:0;right:0;
@@ -53,7 +52,7 @@
         section.flagged ul { display: none; }
         section.sort:hover ul { opacity: 1; }
         section li { padding: 5px 10px; cursor: pointer; }
-        section ul li { margin: 2.5px; background: #000000; color: #FFFFFF; }
+        section ul li { margin: 2.5px; background:rgba(255,255,255,1); color:rgba(0,0,0,1); }
         section ul li:nth-of-type(n+1):nth-of-type(-n+3){ display:none; }
         section > li { display: flex; position: absolute; width: 100%; height: 100%; text-align: center; justify-content: center; align-items: center; z-index: 1; }
         section li.delete { position: absolute; top: 15px; right: 15px; background: #FF0000; }
@@ -79,7 +78,7 @@
           <li><button id="copy-actions" disabled="disabled" data-state="closed" onclick="fCopyCommandToClipboard();" >Copy Changes</button></li>
         </ul>
         <ul>
-          <li><input type="range" data-state="closed" min="1" max="6" step="1" value="2" list="volsettings"><datalist id="volsettings"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></datalist></li>
+          <li><input type="range" data-state="closed" min="1" max="6" step="1" value="1" list="volsettings"><datalist id="volsettings"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></datalist></li>
           <li>
             <label for="select-mode-view" data-state="closed"><input type="radio" id="select-mode-view" name="selector" value="view" checked="checked">View</label>
             <label for="select-mode-manage" data-state="closed"><input type="radio" id="select-mode-manage" name="selector" value="manage">Manage</label>
@@ -92,6 +91,7 @@
 
       <!-- GLOBALS ///////////////////////////////////////////////////////// -->
       <script type="text/javascript">
+        var cHtml = document.documentElement;
         var cBody = document.body;
         var eFileInput = document.querySelector("input[type='file']");
         var eLocationSelect = document.querySelector("select");
@@ -120,8 +120,8 @@
 
         function fGetVars() {
           oImgIn = document.querySelectorAll('article img');
-          sMode = cBody.getAttribute("data-state");
           oChanges = cChanges.querySelectorAll('ul');
+          sMode = cHtml.getAttribute("data-state");
           // oImgs = document.querySelectorAll('.selected img, .unselected img');
         }
 
@@ -297,7 +297,7 @@
         }
 
         function fSelectMode(rSelect) {
-          cBody.setAttribute("data-state", rSelect.srcElement.value);
+          cHtml.setAttribute("data-state", rSelect.srcElement.value);
           eShowActions.setAttribute("data-state", eShowActions.getAttribute("data-state") === "open" ? "closed" : "open");
           eCopyActions.setAttribute("data-state", eCopyActions.getAttribute("data-state") === "open" ? "closed" : "open");
           cChanges.setAttribute("data-state", "closed");
@@ -307,8 +307,14 @@
           }
         }
 
+        function fDetectColumns() {
+          var iColumns = Math.round(document.body.offsetWidth / 420);
+          cHtml.setAttribute("data-state", iColumns)
+          eColumnsRange.setAttribute("value", iColumns)
+        }
+
         function fSelectColumns(rSelect) {
-          cLoadedImgs.setAttribute("data-state", rSelect.target.value)
+          cHtml.setAttribute("data-state", rSelect.target.value)
           oMsnry.layout();
         }
 
@@ -473,6 +479,7 @@
         eLocationSelect.addEventListener('change', fRenderImages, false);
         eModeToggle[0].addEventListener('change', fSelectMode, false);
         eModeToggle[1].addEventListener('change', fSelectMode, false);
+        fDetectColumns();
         eColumnsRange.addEventListener('change', fSelectColumns, false);
         eShowActions.addEventListener('click', function() {
           cChanges.setAttribute("data-state", cChanges.getAttribute("data-state") === "open" ? "closed" : "open");
